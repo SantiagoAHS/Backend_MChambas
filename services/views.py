@@ -20,7 +20,7 @@ class ServiceListAPIView(generics.ListAPIView):
     serializer_class = ServiceSerializer
 
 @api_view(['GET'])
-@permission_classes([AllowAny])  # <-- Aquí permites acceso público
+@permission_classes([AllowAny])  
 def service_detail(request, pk):
     try:
         service = Service.objects.get(pk=pk)
@@ -37,3 +37,30 @@ def services_by_user(request):
     services = Service.objects.filter(provider=user)
     serializer = ServiceSerializer(services, many=True)
     return Response(serializer.data)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def create_service(request):
+    serializer = ServiceSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save(provider=request.user)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def update_service(request, pk):
+    try:
+        service = Service.objects.get(pk=pk, provider=request.user)
+    except Service.DoesNotExist:
+        return Response({'error': 'Servicio no encontrado o no autorizado'}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = ServiceSerializer(service, data=request.data, partial=True)  # `partial=True` permite actualizar campos individuales
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
