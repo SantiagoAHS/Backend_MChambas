@@ -4,8 +4,10 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
-from .models import Service
+from .models import Service, Review
 from .serializers import ServiceSerializer
+from .serializers import ReviewSerializer
+
 
 class ServiceListCreateAPIView(generics.ListCreateAPIView):
     queryset = Service.objects.all().order_by('-created_at')
@@ -60,6 +62,36 @@ def update_service(request, pk):
         serializer.save()
         return Response(serializer.data)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def create_review(request, service_id):
+    try:
+        service = Service.objects.get(id=service_id)
+    except Service.DoesNotExist:
+        return Response({'error': 'Servicio no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+
+    # Evitar que un usuario comente dos veces el mismo servicio
+    if Review.objects.filter(service=service, user=request.user).exists():
+        return Response({'error': 'Ya enviaste una reseña para este servicio'}, status=status.HTTP_400_BAD_REQUEST)
+
+    serializer = ReviewSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save(service=service, user=request.user)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def list_reviews(request, service_id):
+    try:
+        service = Service.objects.get(id=service_id)
+    except Service.DoesNotExist:
+        return Response({'error': 'Servicio no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+
+    reviews = Review.objects.filter(service=service).order_by('-created_at')
+    serializer = ReviewSerializer(reviews, many=True)
+    return Response(serializer.data)
 
 
 
