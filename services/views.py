@@ -4,6 +4,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
+from .utils import validar_direccion_nominatim
 from .models import Service, Review
 from .serializers import ServiceSerializer
 from .serializers import ReviewSerializer
@@ -43,7 +44,34 @@ def services_by_user(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def create_service(request):
-    serializer = ServiceSerializer(data=request.data)
+    data = request.data
+
+    # Extraemos campos de dirección para validar
+    street = data.get("street")
+    city = data.get("city")
+    state = data.get("state")
+    country = data.get("country")
+    postalcode = data.get("postalcode")
+
+    # Validamos la dirección con Nominatim
+    direccion_validada = validar_direccion_nominatim(
+        street=street,
+        city=city,
+        state=state,
+        country=country,
+        postalcode=postalcode
+    )
+
+    if not direccion_validada:
+        return Response({"error": "No se pudo validar la dirección"}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Ponemos el display_name validado en el campo location
+    data["location"] = direccion_validada.get("display_name", "")
+
+     # Guardamos dirección completa validada en el único campo location
+    data["location"] = direccion_validada.get("display_name", "")
+
+    serializer = ServiceSerializer(data=data)
     if serializer.is_valid():
         serializer.save(provider=request.user)
         return Response(serializer.data, status=status.HTTP_201_CREATED)

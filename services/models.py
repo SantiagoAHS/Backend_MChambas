@@ -12,7 +12,7 @@ class Service(models.Model):
     description = models.TextField()
     rating = models.FloatField(default=0.0)
     reviews = models.PositiveIntegerField(default=0)
-    location = models.CharField(max_length=100)
+    location = models.CharField(max_length=255)
     response_time = models.CharField(max_length=50)
     price = models.CharField(max_length=20)
     created_at = models.DateTimeField(auto_now_add=True)
