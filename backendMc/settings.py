@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'user',
     'services',
     'chat',
+    'ventas',
     'rest_framework',
     'rest_framework.authtoken',
 ]
