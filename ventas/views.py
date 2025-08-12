@@ -1,6 +1,7 @@
 from rest_framework import generics, permissions
 from .models import Venta
 from .serializers import VentaSerializer
+from rest_framework.response import Response
 
 # ===================
 # EXISTENTE
@@ -52,10 +53,20 @@ class MisVentasListAPIView(generics.ListAPIView):
         return Venta.objects.filter(servicio__provider=self.request.user)
 
 
-# 4️ Detalle de una venta del vendedor
-class MiVentaDetailAPIView(generics.RetrieveAPIView):
+# 4️ Detalle y actualización de estado de una venta del vendedor
+class MiVentaDetailAPIView(generics.RetrieveUpdateAPIView):
     serializer_class = VentaSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         return Venta.objects.filter(servicio__provider=self.request.user)
+
+    def update(self, request, *args, **kwargs):
+        partial = True  # Permite actualizar campos parciales
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(serializer.data)
+
+

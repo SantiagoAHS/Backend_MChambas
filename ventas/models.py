@@ -18,7 +18,8 @@ class Venta(models.Model):
         max_length=20,
         choices=[
             ('pendiente', 'Pendiente'),
-            ('pagado', 'Pagado'),
+            ('iniciado', 'Iniciado'),
+            ('procesando', 'Procesando'),
             ('cancelado', 'Cancelado'),
             ('completado', 'Completado'),
         ],

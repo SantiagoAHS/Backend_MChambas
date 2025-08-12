@@ -9,14 +9,14 @@ class ServiceMiniSerializer(serializers.ModelSerializer):
 
 class VentaSerializer(serializers.ModelSerializer):
     comprador = serializers.ReadOnlyField(source='comprador.nombre')  
-    servicio = ServiceMiniSerializer(read_only=True)  # Aquí el serializer anidado
+    servicio = ServiceMiniSerializer(read_only=True)
 
     class Meta:
         model = Venta
         fields = [
             'id',
             'comprador',
-            'servicio',   # ahora este incluirá title y price
+            'servicio',
             'cantidad',
             'total',
             'fecha',
@@ -27,5 +27,13 @@ class VentaSerializer(serializers.ModelSerializer):
             'postal_code',
             'phone',
         ]
-        read_only_fields = ['total', 'fecha', 'estado']
+        read_only_fields = ['total', 'fecha']  # quitamos 'estado'
+
+    def validate_estado(self, value):
+        # Solo permitir estados válidos
+        estados_validos = ['pendiente', 'iniciado', 'procesando', 'cancelado', 'completado']
+        if value not in estados_validos:
+            raise serializers.ValidationError("Estado no válido.")
+        return value
+
 
