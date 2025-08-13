@@ -12,6 +12,7 @@ class VentaListCreateAPIView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
+        # Aquí asignas el comprador desde el usuario autenticado
         serializer.save(comprador=self.request.user)
 
 
