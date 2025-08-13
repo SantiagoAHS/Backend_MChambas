@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'services',
     'chat',
     'ventas',
+    'pagos',
     'rest_framework',
     'rest_framework.authtoken',
 ]
