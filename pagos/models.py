@@ -9,6 +9,7 @@ class Tarjeta(models.Model):
     exp_ano = models.PositiveSmallIntegerField()  # Ej: 2025
     token = models.CharField(max_length=100, blank=True, null=True)  # para guardar token si usas proveedor externo
     fecha_creacion = models.DateTimeField(auto_now_add=True)
+    default = models.BooleanField(default=False)  # indica si es la tarjeta por defecto
 
     def __str__(self):
         return f"{self.nombre_titular} - {self.numero_enmascarado}"

@@ -10,7 +10,17 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+
+import os
 from pathlib import Path
+from dotenv import load_dotenv
+
+# Carga las variables del .env
+load_dotenv()
+STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY")
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY = os.environ.get("NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY")
+STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET")  # opcional por ahora
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -160,3 +170,4 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ],
 }
+

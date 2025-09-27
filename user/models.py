@@ -22,6 +22,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     telefono = models.CharField(max_length=15, blank=True)  # nuevo campo
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)  # cambiado a ImageField
 
+    # NUEVO CAMPO
+    stripe_customer_id = models.CharField(max_length=255, blank=True, null=True)
+
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 
