@@ -6,20 +6,30 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'email', 'nombre', 'password', 'telefono', 'avatar']
+        fields = [
+            'id', 'email', 'nombre', 'password', 'telefono', 'avatar',
+            'curp', 'identificacion', 'selfie_verificacion', 'is_verified'
+        ]
+        read_only_fields = ['is_verified']
 
     def create(self, validated_data):
         return User.objects.create_user(**validated_data)
 
     def update(self, instance, validated_data):
-        # Si se quiere cambiar la contraseña
         password = validated_data.pop('password', None)
 
-        # Actualiza los demás campos
+        # Manejar archivos correctamente
+        for file_field in ['avatar', 'identificacion', 'selfie_verificacion']:
+            uploaded_file = validated_data.get(file_field)
+            if uploaded_file is not None:
+                setattr(instance, file_field, uploaded_file)
+                validated_data.pop(file_field)
+
+        # Actualizar los demás campos
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
 
-        # Cambiar la contraseña de forma segura
+        # Cambiar la contraseña si se proporciona
         if password:
             instance.set_password(password)
 
