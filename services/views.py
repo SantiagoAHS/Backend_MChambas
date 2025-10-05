@@ -19,8 +19,40 @@ class ServiceListCreateAPIView(generics.ListCreateAPIView):
         serializer.save(provider=self.request.user)
 
 class ServiceListAPIView(generics.ListAPIView):
-    queryset = Service.objects.all()
     serializer_class = ServiceSerializer
+    permission_classes = [AllowAny]  # 🔹 cualquiera puede ver los servicios
+
+    def get_queryset(self):
+        queryset = Service.objects.all()
+        location = self.request.query_params.get("location")
+        verified = self.request.query_params.get("verified")
+        price_range = self.request.query_params.get("price")  # ahora recibe el rango completo
+        min_rating = self.request.query_params.get("rating")
+
+        if location:
+            queryset = queryset.filter(location__icontains=location)
+        if verified == "true":
+            queryset = queryset.filter(verified=True)
+        if price_range:
+            try:
+                if "-" in price_range:  # rango
+                    min_price, max_price = map(int, price_range.split("-"))
+                    queryset = queryset.filter(price__gte=min_price, price__lte=max_price)
+                elif price_range.startswith("<"):  # menor que
+                    max_price = int(price_range[1:])
+                    queryset = queryset.filter(price__lte=max_price)
+                elif price_range.startswith(">"):  # mayor que
+                    min_price = int(price_range[1:])
+                    queryset = queryset.filter(price__gte=min_price)
+            except ValueError:
+                pass
+        if min_rating:
+            try:
+                queryset = queryset.filter(rating__gte=int(min_rating))
+            except ValueError:
+                pass
+
+        return queryset
 
 @api_view(['GET'])
 @permission_classes([AllowAny])  
@@ -44,16 +76,24 @@ def services_by_user(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def create_service(request):
-    data = request.data
+    user = request.user
 
-    # Extraemos campos de dirección para validar
+    # Bloquear si el usuario no está verificado
+    if not user.is_verified:
+        return Response(
+            {"error": "Tu cuenta no está verificada. No puedes crear servicios."},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    # 👇 Clonamos request.data en un diccionario mutable
+    data = request.data.copy()
+
     street = data.get("street")
     city = data.get("city")
     state = data.get("state")
     country = data.get("country")
     postalcode = data.get("postalcode")
 
-    # Validamos la dirección con Nominatim
     direccion_validada = validar_direccion_nominatim(
         street=street,
         city=city,
@@ -65,16 +105,14 @@ def create_service(request):
     if not direccion_validada:
         return Response({"error": "No se pudo validar la dirección"}, status=status.HTTP_400_BAD_REQUEST)
 
-    # Ponemos el display_name validado en el campo location
-    data["location"] = direccion_validada.get("display_name", "")
-
-     # Guardamos dirección completa validada en el único campo location
+    # 👇 Ahora sí puedes modificar el diccionario
     data["location"] = direccion_validada.get("display_name", "")
 
     serializer = ServiceSerializer(data=data)
     if serializer.is_valid():
-        serializer.save(provider=request.user)
+        serializer.save(provider=user)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['PUT'])

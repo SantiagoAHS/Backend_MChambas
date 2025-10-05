@@ -3,26 +3,45 @@ import requests
 
 def validar_direccion_nominatim(street=None, city=None, state=None, country=None, postalcode=None):
     url = "https://nominatim.openstreetmap.org/search"
+
+    # ✅ Usamos solo los campos más generales (país, estado, ciudad)
     params = {
-        "street": street,
         "city": city,
         "state": state,
         "country": country,
-        "postalcode": postalcode,
-        "format": "json"
+        "format": "json",
+        "limit": 1  # solo necesitamos una coincidencia
     }
 
     headers = {
-        "User-Agent": "miapp-direcciones/1.0 (prueba@ejemplo.com)"  # cámbialo por tu correo real en producción
+        "User-Agent": "sistema-tutorias-uttt/1.0 (contacto@uttt.edu.mx)"
     }
 
-    response = requests.get(url, params=params, headers=headers)
+    try:
+        response = requests.get(url, params=params, headers=headers, timeout=5)
 
-    if response.status_code == 200:
-        data = response.json()
-        if data:
-            return data[0]  # retorna la mejor coincidencia
+        if response.status_code == 200:
+            data = response.json()
+            if data:
+                return data[0]
+            else:
+                # Si no encuentra, devolvemos una dirección básica compuesta
+                return {
+                    "display_name": f"{city}, {state}, {country}",
+                    "lat": None,
+                    "lon": None
+                }
         else:
-            return None
-    else:
-        return None
+            return {
+                "display_name": f"{city}, {state}, {country}",
+                "lat": None,
+                "lon": None
+            }
+
+    except requests.RequestException:
+        # Si hay error en la API, devolvemos una respuesta básica
+        return {
+            "display_name": f"{city}, {state}, {country}",
+            "lat": None,
+            "lon": None
+        }
