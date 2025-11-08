@@ -6,3 +6,5 @@ django-cors-headers
 dj-database-url
 python-dotenv
 Pillow
+requests
+boto3
