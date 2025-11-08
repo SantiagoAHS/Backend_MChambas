@@ -159,6 +159,38 @@ def list_reviews(request, service_id):
     serializer = ReviewSerializer(reviews, many=True)
     return Response(serializer.data)
 
+from rest_framework import viewsets, permissions, status
+from rest_framework.response import Response
+from .models import Service
+from .serializers import ServiceSerializer
+
+class ServiceVerifyViewSet(viewsets.ViewSet):
+    """
+    Vista para listar servicios y actualizar su verificación manualmente.
+    No usa permisos especiales, pero se recomienda ocultarla en el frontend.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    # 🔹 Listar todos los servicios
+    def list(self, request):
+        services = Service.objects.all().order_by('-id')
+        serializer = ServiceSerializer(services, many=True)
+        return Response(serializer.data)
+
+    # 🔹 Actualizar el estado de verificación
+    def partial_update(self, request, pk=None):
+        try:
+            service = Service.objects.get(pk=pk)
+        except Service.DoesNotExist:
+            return Response({"error": "Servicio no encontrado"}, status=status.HTTP_404_NOT_FOUND)
+
+        verified = request.data.get("verified")
+        if verified is not None:
+            service.verified = verified
+            service.save()
+            return Response({"message": "Estado de verificación actualizado correctamente."})
+
+        return Response({"error": "Campo no permitido"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 

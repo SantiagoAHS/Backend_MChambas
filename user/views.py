@@ -88,6 +88,38 @@ class ProfileUpdateView(APIView):
             return Response(UserSerializer(user).data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+from rest_framework import viewsets, permissions, status
+from rest_framework.response import Response
+from .models import User
+from .serializers import UserSerializer
+
+
+class UserVerifyViewSet(viewsets.ViewSet):
+    """
+    Vista para listar usuarios y actualizar su verificación manualmente.
+    No usa permisos especiales, pero se recomienda ocultarla en frontend.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def list(self, request):
+        users = User.objects.all().order_by('-id')
+        serializer = UserSerializer(users, many=True)
+        return Response(serializer.data)
+
+    def partial_update(self, request, pk=None):
+        try:
+            user = User.objects.get(pk=pk)
+        except User.DoesNotExist:
+            return Response({"error": "Usuario no encontrado"}, status=status.HTTP_404_NOT_FOUND)
+
+        # Solo permitir actualizar 'is_verified'
+        is_verified = request.data.get('is_verified')
+        if is_verified is not None:
+            user.is_verified = is_verified
+            user.save()
+            return Response({"message": "Estado de verificación actualizado correctamente."})
+
+        return Response({"error": "Campo no permitido"}, status=status.HTTP_400_BAD_REQUEST)
 
 # ========================
 # Verificación de usuarios (solo admin)
