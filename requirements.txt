@@ -8,3 +8,5 @@ python-dotenv
 Pillow
 requests
 boto3
+stripe
+django-storages
